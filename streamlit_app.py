@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.express as px
+import numpy as np
 
 st.write('Sudestada Forecast')
 
@@ -9,7 +10,13 @@ st.write('Sudestada Forecast')
 def load_data():
     df = pd.read_excel('data_for_presentation.xlsx')
     df['ds'] = pd.to_datetime(df['ds'])
+    df = df.rename(columns={'ds': 'date', 'y': 'quantity'})
     return df
+
+def calculate_accuracy(actual, predicted):
+    mask = actual != 0  # avoid divide by zero errors
+    return 100 - np.mean(np.abs((actual - predicted)[mask] / actual[mask])) * 100
+
 df = load_data()
 
 # Dropdown selection for sku_name
@@ -46,6 +53,17 @@ forecasted_data = filtered_data[filtered_data['status'] == 'forecast']
 
 # Plotting the actual and forecasted data
 if not (actual_data.empty or forecasted_data.empty):
-	st.plotly_chart(px.line(filtered_data, x="ds" ,y='y', color='status'), use_container_width=True) 
+	merged = pd.merge(actual_data, forecasted_data, on=['date'], suffixes=('_actual', '_forecast'), how='inner')
+	accuracy = calculate_accuracy(
+		merged['quantity_actual'].values.reshape(-1),
+		merged['quantity_forecast'].values.reshape(-1),
+	)	
+	fig = px.line(
+			filtered_data, x="date" ,y='quantity', color='status', 
+			color_discrete_sequence=["green", "orange"],
+			title="Accuracy: {} %".format(round(accuracy, 2))
+		)
+	st.plotly_chart(fig, use_container_width=True)
+
 else:
     st.warning('No data available for the selected item.')

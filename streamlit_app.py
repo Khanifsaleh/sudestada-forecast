@@ -9,7 +9,7 @@ st.title('Sudestada Forecast')
 
 @st.cache_data
 def load_data():
-    df = pd.read_excel('data_for_presentation.xlsx')
+    df = pd.read_excel('data_for_presentation2.xlsx')
     df['ds'] = pd.to_datetime(df['ds'])
     df = df.rename(columns={'ds': 'date', 'y': 'quantity'})
     return df
@@ -55,7 +55,7 @@ filtered_data = filtered_by_category[filtered_by_category['item_id_name'] == sel
 
 # Split data into actual and forecasted
 actual_data = filtered_data[filtered_data['status'] == 'actual']
-forecasted_data = filtered_data[filtered_data['status'] == 'forecast']
+forecasted_data = filtered_data[filtered_data['status'] == 'history_forecast']
 
 # Plotting the actual and forecasted data
 if not (actual_data.empty or forecasted_data.empty):
@@ -66,7 +66,7 @@ if not (actual_data.empty or forecasted_data.empty):
 	)	
 	fig = px.line(
 			filtered_data, x="date" ,y='quantity', color='status', 
-			color_discrete_sequence=["green", "orange"],
+			color_discrete_sequence=["green", "orange", "red"],
 			title="Model: {}; \t Accuracy: {} %".format(filtered_data.iloc[0]['model_name'], round(accuracy, 2))
 		)
 	st.plotly_chart(fig, use_container_width=True)
